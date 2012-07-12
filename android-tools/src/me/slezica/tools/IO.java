@@ -9,14 +9,13 @@ public class IO {
           return new Scanner(i).useDelimiter("\\A").next();
     }
     
+    @Deprecated /* obviously do not use this method in production code */
     public static String justHttpGetMe(String url) {
-        /* Just do it already, Java */
-        try {
-            return readInputStream(new URL(url).openStream());
-            
-        } catch (Exception e) { throw new RuntimeException(e); }
+        try   { return readInputStream(new URL(url).openStream()); } 
+        catch (Exception e) { throw new RuntimeException(e); }
     }
     
+    @Deprecated /* obviously do not use this method in production code */
     public static String justHttpGetMe(String url, int retries) {
         if (retries == 0) return justHttpGetMe(url);
         else try {

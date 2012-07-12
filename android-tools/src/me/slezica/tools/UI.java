@@ -1,38 +1,24 @@
 package me.slezica.tools;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
 import android.app.Activity;
-import android.app.Dialog;
 import android.graphics.Bitmap;
 import android.graphics.Bitmap.Config;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.view.View;
 
 public class UI {
 
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface ViewId {
-        int value();
-    }
-    
-    public interface ViewFinder {
-        // Missing Go's implicit interfaces right now
-        public View     findViewById(int id);
-        public Class<?> getOriginalClass();
-    }
+    public @interface ViewId { int value(); }
     
     @Retention(RetentionPolicy.RUNTIME)
-    public @interface ViewListener {
-        String field()  default "";
-        String setter() default "";
-    }
+    public @interface ViewListener { int value(); }
     
     @SuppressWarnings("unchecked")
     public static <T extends View> T findView(View v, int id) {
@@ -44,130 +30,108 @@ public class UI {
         return (T) a.findViewById(id);
     }
     
-    public static void findViews(Activity activity) {
-        try {
-            for (Field field : activity.getClass().getDeclaredFields()) {
-                ViewId viewId = field.getAnnotation(ViewId.class);
-                
-                if (viewId != null) {
-                    boolean wasAccessible = field.isAccessible();
-                    
-                    if (!wasAccessible)
-                        field.setAccessible(true);
-                    
-                    View view = activity.findViewById(viewId.value());
-                    
-                    if (view != null)
-                        field.set(activity, view);
-                    
-                    else {
-                        throw new IllegalArgumentException(String.format(
-                            "No view in found in %s for field %s and ID %d",
-                            activity.getClass().getName(),
-                            field.getName(),
-                            viewId.value()
-                        ));
-                    }
-                    
-                    if (!wasAccessible)
-                        field.setAccessible(false);
-                }
-            }
-        
-        } catch (Exception e) {
-            throw new RuntimeException(e); // Avoid forced check
-        }
+    public static void findViews(Activity a) {
+        findViews(a, getRoot(a));
     }
     
-    // TODO abstract this. Try and find out what went wrong
-    // with the ViewFinder strategy (threw ClassCastEx)
-    public static void findViews(Dialog dialog) {
-        try {
-            for (Field field : dialog.getClass().getDeclaredFields()) {
-                ViewId viewId = field.getAnnotation(ViewId.class);
-                
-                if (viewId != null) {
-                    boolean wasAccessible = field.isAccessible();
-                    
-                    if (!wasAccessible)
-                        field.setAccessible(true);
-                    
-                    View view = dialog.findViewById(viewId.value());
-                    
-                    if (view != null)
-                        field.set(dialog, view);
-                    
-                    else {
-                        throw new IllegalArgumentException(String.format(
-                            "No view in found in %s for field %s and ID %d",
-                            dialog.getClass().getName(),
-                            field.getName(),
-                            viewId.value()
-                        ));
-                    }
-                    
-                    if (!wasAccessible)
-                        field.setAccessible(false);
-                }
-            }
-        
-        } catch (Exception e) {
-            throw new RuntimeException(e); // Avoid forced check
-        }
+    public static void findViews(Object parent, View root) {
+        try   { _findViews(parent, root); }
+        catch (Exception e) { throw new RuntimeException(e); }
     }
     
-    public static void findListeners(Activity activity) {
-        try {
-            Class<? extends Activity> cls = activity.getClass();
+    static void _findViews(Object parent, View root) throws IllegalArgumentException, IllegalAccessException {
+        for (Field f : parent.getClass().getDeclaredFields()) {
+            ViewId viewId = f.getAnnotation(ViewId.class);
             
-            for (Field field : cls.getDeclaredFields()) {
-                ViewListener viewListener = field.getAnnotation(ViewListener.class);
+            if (viewId != null) {
+                boolean wasAccessible = f.isAccessible();
                 
-                if (viewListener != null) {
-                    String targetName       = viewListener.field(),
-                           targetSetterName = viewListener.setter();
-                    
-                    if (targetName.equals("")) // Assume from naming
-                        targetName = field.getName().split("_")[0];
-
-                    Field target = (Field) cls.getDeclaredField(targetName);
-                    
-                    boolean fieldWasAccesible   = field .isAccessible(),
-                            targetWasAccessible = target.isAccessible();
-                    
-                    
-                    if (!fieldWasAccesible)
-                        field .setAccessible(true);
-                    
-                    if (!targetWasAccessible)
-                        target.setAccessible(true);
-                    
-                    if (targetSetterName.equals("")) {
-                        // Look setter up given method signatures
-                        for (Method method: target.getType().getMethods()) {
-                            
-                            if (method.getParameterTypes().length == 1                &&
-                                method.getParameterTypes()[0].equals(field.getType()) &&
-                                method.getName().startsWith("set")
-                               ) {
-                                
-                                method.invoke(target.get(activity), field.get(activity));
-                            }
-                        }
-                    
-                    }
-                    
-                    if (!fieldWasAccesible)
-                        field .setAccessible(false);
-                    
-                    if (!targetWasAccessible)
-                        target.setAccessible(false);
-                }
+                if (!wasAccessible) f.setAccessible(true);
+                
+                View view = root.findViewById(viewId.value());
+                
+                if   (view != null) f.set(parent, view);
+                else throw new IllegalArgumentException(noViewFound(parent, f, viewId));
+                
+                if (!wasAccessible) f.setAccessible(false);
             }
-        
-        } catch (Exception e) {
-            throw new RuntimeException(e); // Avoid forced check
         }
+    }
+    
+    static String noViewFound(Object a, Field f, ViewId v) {
+        return String.format("No view in found in %s for field %s and ID %d",
+                             a.getClass().getName(), f.getName(), v.value());
+    }
+    
+    public static void findListeners(Activity a) {
+        findListeners(a, getRoot(a));
+    }
+    
+    public static void findListeners(Object parent, View root) {
+        try   { _findListeners(parent, root); }
+        catch (Exception e) { throw new RuntimeException(e); }
+    }
+    
+    public static void _findListeners(Object parent, View root) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+        for (Field field : parent.getClass().getDeclaredFields()) {
+            ViewListener viewListener = field.getAnnotation(ViewListener.class);
+            
+            if (viewListener != null) {
+                Field target = findViewIdFor(parent, viewListener.value());
+                
+                if   (target != null) setListener(parent, field, target);
+                else throw new IllegalArgumentException();
+            }
+        }
+    }
+    
+    static void setListener(Object parent, Field source, Field target) throws IllegalArgumentException, IllegalAccessException, InvocationTargetException {
+        boolean fieldWasAccesible   = source.isAccessible(),
+                targetWasAccessible = target.isAccessible();
+        
+        if (!fieldWasAccesible)   source.setAccessible(true);
+        if (!targetWasAccessible) target.setAccessible(true);
+        
+        Method setter = findSetter(source, target);
+        
+        if (setter != null) setter.invoke(target.get(parent), source.get(parent));
+        else throw new IllegalArgumentException(noSetterFound(source, target));
+        
+        if (!fieldWasAccesible)   source .setAccessible(false);
+        if (!targetWasAccessible) target.setAccessible(false);
+    }
+    
+    static Field findViewIdFor(Object parent, int targetId) throws NullPointerException {
+        for (Field f : parent.getClass().getDeclaredFields())
+        if  (viewIdOrZero(f) == targetId)
+            return f;
+        
+        return null;
+    }
+    
+    static Method findSetter(Field source, Field target) {
+        for (Method method: target.getType().getMethods()) {
+            
+            if (method.getParameterTypes().length == 1
+            &&  method.getParameterTypes()[0].equals(source.getType())
+            &&  method.getName().startsWith("set"))
+                return method;
+            
+        } return null;
+    }
+    
+    
+    static int viewIdOrZero(Field f) {
+        ViewId  viewId = f.getAnnotation(ViewId.class);
+        return (viewId != null) ? viewId.value() : 0;
+    }
+    
+    static String noSetterFound(Field source, Field target) {
+        return String.format("%s: No setter found in %s of type %s for %s of type %s",
+            source.getDeclaringClass().getSimpleName(),
+            source.getName(), source.getType().getSimpleName(),
+            target.getName(), target.getType().getSimpleName()
+        );
     }
     
     public static Bitmap snapshot(View view) {
@@ -180,17 +144,12 @@ public class UI {
     }
     
     public static Bitmap snapshot(Activity activity) {
-        return snapshot(activity.findViewById(android.R.id.content));
+        return snapshot(getRoot(activity));
     }
     
-    public static byte[] bmpToBytes(Bitmap bmp) {
-        ByteArrayOutputStream ostream = new ByteArrayOutputStream();
-        bmp.compress(Bitmap.CompressFormat.PNG, 100, ostream);
-        return ostream.toByteArray();
+    
+    public static View getRoot(Activity activity) {
+        return activity.findViewById(android.R.id.content);
     }
     
-    public static Bitmap bytesToBmp(byte[] bytes) {
-        return BitmapFactory.decodeStream(new ByteArrayInputStream(bytes));
-    }
 }
-

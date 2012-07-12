@@ -14,7 +14,7 @@ import android.content.Intent;
 import android.database.Cursor;
 import android.os.Bundle;
 
-public abstract class DataObject<T> implements Serializable {
+public abstract class DataObject<T extends DataObject<T>> implements Serializable {
 
     public ContentValues toValues() {
         final ContentValues cv = new ContentValues();
@@ -37,7 +37,7 @@ public abstract class DataObject<T> implements Serializable {
     
     public Intent asIntent(Context ctx, Class<?> target) {
         Intent i = new Intent(ctx, target);
-            i.putExtra(this.getClass().getSimpleName(), this.toBytes());
+            i.getExtras().putAll(toBundle());
         return i;
     }
     
@@ -98,5 +98,5 @@ public abstract class DataObject<T> implements Serializable {
         return str.substring(0, str.length() - 2) + "]";
     }
     
-    private static final long serialVersionUID = 1;
+    private static final long serialVersionUID = 2;
 }
