@@ -22,7 +22,7 @@
  *
  */
 
-package me.slezica.tools;
+package me.slezica.android.tools;
 
 import java.util.LinkedList;
 import java.util.List;

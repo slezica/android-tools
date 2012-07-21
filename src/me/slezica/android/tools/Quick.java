@@ -1,12 +1,14 @@
-package me.slezica.tools;
+package me.slezica.android.tools;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-public class _ {
+public class Quick {
+    
     public static <K, V> Map<K, V> map() { return new HashMap<K, V>(); }
 
     public static <K, V> Map<K, V> map(Map.Entry<K, V>[] entries) {
@@ -37,5 +39,17 @@ public class _ {
     
     static String missingValue(Object key) {
         return "Missing value for key <" + key + "> in map parameters";
+    }
+    
+    public static String justHttpGetMe(String url) {
+        try   { return IO.readInputStream(new URL(url).openStream()); } 
+        catch (Exception e) { throw new RuntimeException(e); }
+    }
+    
+    public static String justHttpGetMe(String url, int retries) {
+        if (retries == 0) return justHttpGetMe(url);
+        else try {
+            return justHttpGetMe(url);
+        } catch (Exception ex) { return justHttpGetMe(url, retries - 1); }
     }
 }
