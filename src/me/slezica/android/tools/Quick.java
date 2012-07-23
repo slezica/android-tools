@@ -1,12 +1,17 @@
 package me.slezica.android.tools;
 
+import java.io.InputStream;
 import java.net.URL;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
+import java.util.Scanner;
 import java.util.Set;
 
+@SuppressWarnings("unchecked")
 public class Quick {
     
     public static <K, V> Map<K, V> map() { return new HashMap<K, V>(); }
@@ -17,7 +22,6 @@ public class Quick {
         return map;
     }
 
-    @SuppressWarnings("unchecked")
     public static <K, V> Map<K, V> map(K key0, V value0, Object... pairs) {
         if (pairs.length % 2 != 0)
         throw new IllegalArgumentException(missingValue(pairs[pairs.length - 1]));
@@ -31,6 +35,8 @@ public class Quick {
         return map;
     }
     
+    public static <T> List<T> list() { return new ArrayList<T>(); }
+    
     public static <T> Set<T> set() { return new HashSet<T>(); }
 
     public static <T> Set<T> set(T... elements) {
@@ -42,7 +48,7 @@ public class Quick {
     }
     
     public static String justHttpGetMe(String url) {
-        try   { return IO.readInputStream(new URL(url).openStream()); } 
+        try   { return readInputStream(new URL(url).openStream()); } 
         catch (Exception e) { throw new RuntimeException(e); }
     }
     
@@ -51,5 +57,9 @@ public class Quick {
         else try {
             return justHttpGetMe(url);
         } catch (Exception ex) { return justHttpGetMe(url, retries - 1); }
+    }
+    
+    public static String readInputStream(InputStream i) {
+        return new Scanner(i).useDelimiter("\\A").next();
     }
 }

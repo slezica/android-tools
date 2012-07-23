@@ -22,13 +22,42 @@
  *
  */
 
-package me.slezica.android.tools;
+package me.slezica.android.tools.ui;
 
-import java.io.InputStream;
-import java.util.Scanner;
+import android.app.Activity;
+import android.graphics.Bitmap;
+import android.graphics.Bitmap.Config;
+import android.graphics.Canvas;
+import android.view.View;
 
-public class IO {
-    public static String readInputStream(InputStream i) {
-          return new Scanner(i).useDelimiter("\\A").next();
+public class UI {
+    
+    @SuppressWarnings("unchecked")
+    public static <T extends View> T findView(View v, int id) {
+        return (T) v.findViewById(id);
     }
+    
+    @SuppressWarnings("unchecked")
+    public static <T extends View> T findView(Activity a, int id) {
+        return (T) a.findViewById(id);
+    }
+    
+    public static Bitmap snapshot(View view) {
+        Bitmap bitmap = Bitmap.createBitmap(
+            view.getWidth(), view.getHeight(), Config.ARGB_8888
+        );
+        
+        view.draw(new Canvas(bitmap));
+        return bitmap;
+    }
+    
+    public static Bitmap snapshot(Activity activity) {
+        return snapshot(getRoot(activity));
+    }
+    
+    
+    public static View getRoot(Activity activity) {
+        return activity.findViewById(android.R.id.content).getRootView();
+    }
+    
 }

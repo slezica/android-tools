@@ -1,4 +1,4 @@
-package me.slezica.android.tools;
+package me.slezica.android.tools.reflect;
 
 import java.lang.annotation.Annotation;
 import java.lang.annotation.Retention;
@@ -9,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 
+import me.slezica.android.tools.ui.UI;
 import android.app.Activity;
 import android.content.Context;
 import android.content.res.ColorStateList;
@@ -23,7 +24,12 @@ import static java.lang.annotation.ElementType.FIELD;
 import static java.lang.annotation.ElementType.METHOD;
 import static java.lang.annotation.RetentionPolicy.RUNTIME;
 
+/**
+ * @author Santiago Lezica
+ *
+ */
 public class Inject {
+
     @Retention(RUNTIME) @Target(FIELD)
     public static @interface Content { int value() default -1; }
     
@@ -98,7 +104,7 @@ public class Inject {
         Method     targetm  = null;
         Class<?>[] targetmp = new Class<?>[] { l.as() };
         
-        if (!l.with().isEmpty()) { /* We were told which setter to use */
+        if (!l.with().equals("")) { /* We were told which setter to use */
             targetm = targetc.getMethod(l.with(), targetmp);
             
         } else {

@@ -22,8 +22,10 @@
  *
  */
 
-package me.slezica.android.tools;
+package me.slezica.android.tools.ui;
 
+import me.slezica.android.tools.Cache;
+import me.slezica.android.tools.R;
 import android.animation.Animator;
 import android.animation.Animator.AnimatorListener;
 import android.animation.AnimatorSet;

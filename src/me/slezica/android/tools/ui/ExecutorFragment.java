@@ -22,23 +22,23 @@
  *
  */
 
-package me.slezica.android.tools;
+package me.slezica.android.tools.ui;
 
 import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.Executor;
 
-import android.app.Activity;
-import android.app.Fragment;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentActivity;
 
 public class ExecutorFragment extends Fragment implements Executor {
 
     protected Boolean mReady = false;
     protected List<Runnable> mPending = new LinkedList<Runnable>();
 
-    public ExecutorFragment(Activity parent) {
-        parent.getFragmentManager()
+    public ExecutorFragment(FragmentActivity parent) {
+        parent.getSupportFragmentManager()
             .beginTransaction().add(getId(), this)
         .commit();
     }

@@ -26,6 +26,7 @@ package me.slezica.android.tools;
 
 import java.util.Map;
 
+
 public class Cache<T> {
     
     private int idCounter = 0;
